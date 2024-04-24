@@ -1,11 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    float speedPlayer = 10f;
+    public PlayerStats stats; 
+
     Rigidbody rb;
+    float currentSpeed = 0f;
 
     void Start()
     {
@@ -36,12 +36,22 @@ public class PlayerMovement : MonoBehaviour
             movement.z -= 1;
         }
 
+        //friction
+        Vector3 friction = -rb.velocity.normalized * stats.groundFriction;
+        rb.velocity += friction * Time.deltaTime;
 
+        
+        currentSpeed = rb.velocity.magnitude;
 
-        rb.velocity += movement * speedPlayer * Time.deltaTime;
+        //velocidad maxima
+        if (currentSpeed > stats.maxSpeed)
+        {
+            rb.velocity = rb.velocity.normalized * stats.maxSpeed;
+            currentSpeed = stats.maxSpeed;
+        }
 
-
-
+        //aceleration
+        rb.velocity += movement * stats.forwardAcceleration * Time.deltaTime;
 
     }
 }
