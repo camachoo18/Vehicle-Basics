@@ -5,85 +5,144 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     float speedPlayer = 10f;
-    [SerializeField] float friction = 5f;
     Rigidbody rb;
     float maxVelocity = 10f;
-    Vector3 rotate = new Vector3(0, 0.1f, 0);
+    [SerializeField] Vector3 rotate = new Vector3(0, 0.1f, 0);
+
+    [Header("Friction and break")]
+    [SerializeField] float powerBreak;
+    [SerializeField] float friction;
+
+    [Header("Particles")]
     [SerializeField] ParticleSystem particulasAC;
-    [SerializeField] ParticleSystem left;
-    [SerializeField] ParticleSystem right;
+    [SerializeField] ParticleSystem particulasL;
+    [SerializeField] ParticleSystem particulasR;
+    Vector2 movementInput = Vector2.zero;
+
 
     void Start()
     {
         particulasAC.Stop();
+        particulasL.Stop();
+        particulasR.Stop();
         rb = GetComponent<Rigidbody>();
     }
 
+
     void Update()
     {
-        Vector3 movement = Vector3.zero;
+        MovementInput();
+    }
+
+    private void FixedUpdate()
+    {
+        Movement();
+    }
+
+    void MovementInput()
+    {
+        movementInput = Vector2.zero;
 
         if (Input.GetKey(KeyCode.W))
         {
-            movement.z -= 1;
-            //movement += transform.forward;
-            
+            movementInput.x += 1;
         }
 
-        if (Input.GetKeyDown(KeyCode.W))
-            particulasAC.Play();
 
 
         if (Input.GetKey(KeyCode.S))
         {
-            // movement.x -= 1;
-
+            movementInput.x -= 1;
         }
+
+
 
         if (Input.GetKey(KeyCode.D))
         {
-            rb.angularVelocity += rotate;
+            movementInput.y += 1;
         }
-        if (Input.GetKeyDown(KeyCode.D))
-            right.Play();
-        
-        
-        else if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.A))
-        {
-            left.Stop();
-            right.Stop();
-        }
-
 
         if (Input.GetKey(KeyCode.A))
         {
-            rb.angularVelocity -= rotate;
+            movementInput.y -= 1;
+        }
+
+
+        if (Input.GetKeyDown(KeyCode.W))
+            particulasAC.Play();
+
+        if (Input.GetKeyDown(KeyCode.D))
+            particulasL.Play();
+
+        else if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.A))
+        {
+            particulasL.Stop();
+            particulasR.Stop();
+        }
+
+        if (Input.GetKeyDown(KeyCode.A))
+            particulasR.Play();
+
+    }
+
+
+    void Movement()
+    {
+
+        if (movementInput.x < 0)
+        {
+
+            if (transform.InverseTransformDirection(rb.velocity).z < 0)
+            {
+                rb.velocity -= transform.forward * speedPlayer * Time.fixedDeltaTime;
+
+            }
+
+            else
+            {
+                rb.velocity = new Vector3(
+                        rb.velocity.x / (1 + powerBreak * Time.fixedDeltaTime),
+                        rb.velocity.y,
+                        rb.velocity.z / (1 + powerBreak * Time.fixedDeltaTime));
+
+
+            }
 
         }
-        if (Input.GetKeyDown(KeyCode.A))
-            left.Play();
 
 
-        if (movement != Vector3.zero)
-            rb.velocity += transform.forward * speedPlayer * Time.deltaTime;
+
+        if (movementInput.y != 0)
+        {
+            rb.angularVelocity += new Vector3(
+                0,
+                rotate.y * movementInput.y,
+                0
+            );
+
+        }
+
+        if (movementInput.x > 0)
+        {
+            rb.velocity += transform.forward * speedPlayer * Time.fixedDeltaTime;
+
+
+        }
 
         else
         {
-            //rb.velocity /= rb.velocity.z + friccion * Time.deltaTime;
-            rb.velocity = new Vector3(rb.velocity.x / (1 + friction * Time.deltaTime),
+            rb.velocity = new Vector3(
+                rb.velocity.x / (1 + friction * Time.deltaTime),
                 rb.velocity.y,
                 (rb.velocity.z / (1 + friction * Time.deltaTime)));
-           //print(friccion);
-            particulasAC.Stop();
-        }
 
+            particulasAC.Stop();
+
+        }
 
         if (rb.velocity.x >= maxVelocity || rb.velocity.z >= maxVelocity)
         {
             rb.velocity = rb.velocity.normalized * maxVelocity;
         }
-
-
-
     }
 }
