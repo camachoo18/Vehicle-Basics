@@ -7,98 +7,126 @@ public class PlayerMovement : MonoBehaviour
     float speedPlayer = 10f;
     Rigidbody rb;
     float maxVelocity = 10f;
-    Vector3 rotate = new Vector3(0, 0.1f, 0);
+    [SerializeField] Vector3 rotate = new Vector3(0, 0.1f, 0);
 
-    [Header("Friction y break")]
-    [SerializeField] float breakPower;
+    [Header("Friction and break")]
+    [SerializeField] float powerBreak;
     [SerializeField] float friction;
 
-    [Header("Particulas")]
+    [Header("Particles")]
     [SerializeField] ParticleSystem particulasAC;
-    [SerializeField] ParticleSystem particulasleft;
-    [SerializeField] ParticleSystem particulasRight;
+    [SerializeField] ParticleSystem particulasL;
+    [SerializeField] ParticleSystem particulasR;
+    Vector2 movementInput = Vector2.zero;
+
 
     void Start()
     {
         particulasAC.Stop();
-        particulasleft.Stop();
-        particulasRight.Stop();
+        particulasL.Stop();
+        particulasR.Stop();
         rb = GetComponent<Rigidbody>();
     }
 
+
     void Update()
     {
-        Vector3 movement = Vector3.zero;
+        MovementInput();
+    }
 
-       
+    private void FixedUpdate()
+    {
+        Movement();
+    }
+
+    void MovementInput()
+    {
+        movementInput = Vector2.zero;
+
         if (Input.GetKey(KeyCode.W))
         {
-            movement.z += 1;
-            print("a");
+            movementInput.x += 1;
         }
 
-        if (Input.GetKeyDown(KeyCode.W))
-            particulasAC.Play();
 
 
-//break and backward
-
-        if (Input.GetKeyDown(KeyCode.D))
-            particulasleft.Play();
-
-        else if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.A))
+        if (Input.GetKey(KeyCode.S))
         {
-            particulasleft.Stop();
-            particulasRight.Stop();
+            movementInput.x -= 1;
         }
 
-        if (Input.GetKeyDown(KeyCode.A))
-            particulasRight.Play();
 
-
-
-        //if (Input.GetKeyDown(KeyCode.S))
-        //{
-        //    if(movement != Vector3.zero)
-        //    {
-        //        rb.velocity = new Vector3(
-        //                rb.velocity.x / ( 1 + frenado * Time.deltaTime),
-        //                rb.velocity.y,
-        //                (rb.velocity.z / (1 + frenado * Time.deltaTime)));
-        //        print("s");
-        //    }
-
-        //    else
-        //    {
-        //        rb.AddForce(-transform.forward * -speedPlayer * Time.deltaTime);
-        //    }
-        //    print(movement);
-        //}
 
         if (Input.GetKey(KeyCode.D))
         {
-            rb.angularVelocity += rotate;
+            movementInput.y += 1;
         }
 
         if (Input.GetKey(KeyCode.A))
         {
-            rb.angularVelocity -= rotate;
+            movementInput.y -= 1;
+        }
+
+
+        if (Input.GetKeyDown(KeyCode.W))
+            particulasAC.Play();
+
+        if (Input.GetKeyDown(KeyCode.D))
+            particulasL.Play();
+
+        else if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.A))
+        {
+            particulasL.Stop();
+            particulasR.Stop();
+        }
+
+        if (Input.GetKeyDown(KeyCode.A))
+            particulasR.Play();
+
+    }
+
+
+    void Movement()
+    {
+
+        if (movementInput.x < 0)
+        {
+
+            if (transform.InverseTransformDirection(rb.velocity).z < 0)
+            {
+                rb.velocity -= transform.forward * speedPlayer * Time.fixedDeltaTime;
+
+            }
+
+            else
+            {
+                rb.velocity = new Vector3(
+                        rb.velocity.x / (1 + powerBreak * Time.fixedDeltaTime),
+                        rb.velocity.y,
+                        rb.velocity.z / (1 + powerBreak * Time.fixedDeltaTime));
+
+
+            }
 
         }
 
 
-        if (movement != Vector3.zero)
-        {
-            rb.velocity += transform.forward * speedPlayer * Time.deltaTime;
 
-            if (Input.GetKey(KeyCode.S))
-            {
-                rb.velocity = new Vector3(
-                    rb.velocity.x / (1 + breakPower * Time.deltaTime),
-                    rb.velocity.y,
-                    (rb.velocity.z / (1 + breakPower * Time.deltaTime)));
-                print("Estoy Frenando");
-            }
+        if (movementInput.y != 0)
+        {
+            rb.angularVelocity += new Vector3(
+                0,
+                rotate.y * movementInput.y,
+                0
+            );
+
+        }
+
+        if (movementInput.x > 0)
+        {
+            rb.velocity += transform.forward * speedPlayer * Time.fixedDeltaTime;
+
+
         }
 
         else
@@ -107,22 +135,14 @@ public class PlayerMovement : MonoBehaviour
                 rb.velocity.x / (1 + friction * Time.deltaTime),
                 rb.velocity.y,
                 (rb.velocity.z / (1 + friction * Time.deltaTime)));
-            print(friction);
-            particulasAC.Stop();
-            if (Input.GetKey(KeyCode.S))
-            {
-                rb.velocity -= transform.forward * speedPlayer * Time.deltaTime;
-                print("patras");
-            }
-        }
 
+            particulasAC.Stop();
+
+        }
 
         if (rb.velocity.x >= maxVelocity || rb.velocity.z >= maxVelocity)
         {
             rb.velocity = rb.velocity.normalized * maxVelocity;
         }
-
-
-
     }
 }
