@@ -4,41 +4,29 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    [SerializeField] Transform target;
-    [SerializeField] float followSmooth = 0.125f;
-    [SerializeField] float lookAheadDistance = 5.0f;
-    [SerializeField] float lookAheadSmooth = 0.125f;
-    [SerializeField] float rotationSmooth = 0.125f;
-    [SerializeField] float minDistanceToTarget = 2.0f;
-
-    Vector3 offset;
-    Vector3 desiredPosition;
-    Vector3 smoothPosition;
-
+    [SerializeField] Transform PlayerTr;
+    [SerializeField] float followPlayerSmooth;
+    [SerializeField] float lookAheadDistance;
+    [SerializeField] float lookAheadSmooth;
+    [SerializeField] float rotationSmooth;
+    [SerializeField] float minDistanceToPlayer;
+    [SerializeField] float upDistance;
+    [SerializeField] Vector3 offset = new Vector3(10f, 10f, 10f);
+    [SerializeField] Vector3 currenteVelocity;
     void Start()
     {
-        offset = transform.position - target.position;
+
     }
 
     void Update()
     {
-        Vector3 targetPosition = target.position + offset;
-
-        Vector3 lookAhead = target.forward * lookAheadDistance;
-
-        desiredPosition = targetPosition + lookAhead;
-
-        float distanceToTarget = Vector3.Distance(transform.position, target.position);
-        if (distanceToTarget < minDistanceToTarget)
-        {
-            desiredPosition = target.position - transform.forward * minDistanceToTarget;
-        }
-
-        smoothPosition = Vector3.Lerp(transform.position, desiredPosition, followSmooth);
-
-        transform.position = smoothPosition;
-
-        Quaternion desiredRotation = Quaternion.LookRotation(target.position - transform.position);
-        transform.rotation = Quaternion.Lerp(transform.rotation, desiredRotation, rotationSmooth);
+        transform.position = Vector3.SmoothDamp(
+            transform.localPosition,
+            PlayerTr.position + PlayerTr.forward * offset.z + PlayerTr.up * upDistance + PlayerTr.right * lookAheadDistance,
+            ref currenteVelocity,
+            followPlayerSmooth
+        );
+        transform.LookAt(PlayerTr.position);
+        //transform.rotation = Quaternion.AngleAxis(Input.GetAxis("Horizontal") * rotationSmooth, Vector3.up) * offset;
     }
 }
