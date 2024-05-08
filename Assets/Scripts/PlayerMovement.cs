@@ -12,13 +12,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] Vector3 rotate = new Vector3(0, 0.1f, 0);
     [SerializeField] Vector3 giroFrenoMano;
 
-    [Header("Friccion y otros")]
-    [SerializeField] float FuerzaDeFrenado;
-    [SerializeField] float friccion;
-    bool PalancaCambio;
-    [SerializeField] float FuerzaFrenoMano;
+    [Header("Friction and break")]
+    [SerializeField] float breakPower;
+    [SerializeField] float friction;
+    bool gearLever;
+    [SerializeField] float handBreakPower;
 
-    [Header("Particulas")]
+    [Header("Particles")]
     [SerializeField] ParticleSystem particulasAC;
     [SerializeField] ParticleSystem particulasL;
     [SerializeField] ParticleSystem particulasR;
@@ -48,15 +48,14 @@ public class PlayerMovement : MonoBehaviour
     void MovementInput()
     {
         movementInput = Vector2.zero;
-      
+
         if (Input.GetKey(KeyCode.W))
         {
             movementInput.x += 1;
         }
 
 
-        //if ((Input.GetKeyUp(KeyCode.W)) || (Input.GetKeyDown(KeyCode.W)) && (Input.GetKey(KeyCode.S)))
-        //    particulasAC.Stop();
+
 
         if (Input.GetKey(KeyCode.S))
         {
@@ -76,7 +75,7 @@ public class PlayerMovement : MonoBehaviour
             movementInput.y -= 1;
         }
 
-        PalancaCambio = Input.GetKey(KeyCode.Space);
+        gearLever = Input.GetKey(KeyCode.Space);
 
         if (Input.GetKeyDown(KeyCode.W))
             particulasAC.Play();
@@ -110,22 +109,22 @@ public class PlayerMovement : MonoBehaviour
             else
             {
                 rb.velocity = new Vector3(
-                        rb.velocity.x / (1 + FuerzaDeFrenado * Time.fixedDeltaTime),
+                        rb.velocity.x / (1 + breakPower * Time.fixedDeltaTime),
                         rb.velocity.y,
-                        rb.velocity.z / (1 + FuerzaDeFrenado * Time.fixedDeltaTime));
+                        rb.velocity.z / (1 + breakPower * Time.fixedDeltaTime));
             }
-           
+
         }
 
-        if (PalancaCambio)
+        if (gearLever)
         {
             rb.velocity = new Vector3(
-                        rb.velocity.x / (1 + FuerzaFrenoMano * Time.fixedDeltaTime),
+                        rb.velocity.x / (1 + handBreakPower * Time.fixedDeltaTime),
                         rb.velocity.y,
-                        rb.velocity.z / (1 + FuerzaFrenoMano * Time.fixedDeltaTime));
+                        rb.velocity.z / (1 + handBreakPower * Time.fixedDeltaTime));
 
 
-            print("palancaCambio");
+            print("palancaDECambio");
         }
 
 
@@ -135,7 +134,7 @@ public class PlayerMovement : MonoBehaviour
                 rb.angularVelocity.x,
                 rb.angularVelocity.y - rotate.y);
 
-            if (PalancaCambio)
+            if (gearLever)
             {
                 rb.angularVelocity += new Vector3(
                 rb.angularVelocity.x,
@@ -149,7 +148,7 @@ public class PlayerMovement : MonoBehaviour
                 rb.angularVelocity.x,
                 rb.angularVelocity.y + rotate.y);
 
-            if (PalancaCambio)
+            if (gearLever)
             {
                 rb.angularVelocity -= new Vector3(
                 rb.angularVelocity.x,
@@ -164,9 +163,9 @@ public class PlayerMovement : MonoBehaviour
             //if (Input.GetKey(KeyCode.S))
             //{
             //    rb.velocity = new Vector3(
-            //        rb.velocity.x / (1 + FuerzaDeFrenado * Time.deltaTime),
+            //        rb.velocity.x / (1 + breakPower * Time.deltaTime),
             //        rb.velocity.y,
-            //        (rb.velocity.z / (1 + FuerzaDeFrenado * Time.deltaTime)));
+            //        (rb.velocity.z / (1 + breakPower * Time.deltaTime)));
             //    print("Estoy Frenando");
             //}
         }
@@ -174,10 +173,10 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             rb.velocity = new Vector3(
-                rb.velocity.x / (1 + friccion * Time.deltaTime),
+                rb.velocity.x / (1 + friction * Time.deltaTime),
                 rb.velocity.y,
-                (rb.velocity.z / (1 + friccion * Time.deltaTime)));
-            //print(friccion);
+                (rb.velocity.z / (1 + friction * Time.deltaTime)));
+            //print(friction);
             particulasAC.Stop();
             //if (Input.GetKey(KeyCode.S))
             //{
