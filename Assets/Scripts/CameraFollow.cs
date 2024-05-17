@@ -1,44 +1,73 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+
 
 public class CameraFollow : MonoBehaviour
 {
     [SerializeField] Transform target;
-    [SerializeField] float followSmooth = 0.125f;
-    [SerializeField] float lookAheadDistance = 5.0f;
-    [SerializeField] float lookAheadSmooth = 0.125f;
-    [SerializeField] float rotationSmooth = 0.125f;
-    [SerializeField] float minDistanceToTarget = 2.0f;
 
-    Vector3 offset;
-    Vector3 desiredPosition;
-    Vector3 smoothPosition;
+    [SerializeField] float followSmooth = .3f;
+    [SerializeField] float lookAheadDistance = 2;
+    [SerializeField] float lookAheadSmooth = 1;
+    [SerializeField] float rotationSmooth = 1;
+    [SerializeField] float minDistanceToTarget = 5;
+
+    Vector3 positionVelocity = Vector3.zero;
+    Vector3 lookAhead;
+    bool playerIsDead = false;
+    Vector3 lookAheadVelocity = Vector3.zero;
+    Vector3 directionToTarget;
+
 
     void Start()
     {
-        offset = transform.position - target.position;
+        transform.position = target.position;
+
+      
     }
 
-    void Update()
+
+     void Update()
     {
-        Vector3 targetPosition = target.position + offset;
-
-        Vector3 lookAhead = target.forward * lookAheadDistance;
-
-        desiredPosition = targetPosition + lookAhead;
-
-        float distanceToTarget = Vector3.Distance(transform.position, target.position);
-        if (distanceToTarget < minDistanceToTarget)
+        if (!playerIsDead)
         {
-            desiredPosition = target.position - transform.forward * minDistanceToTarget;
+            transform.position = Vector3.SmoothDamp(
+                transform.position,
+                target.position - target.forward * minDistanceToTarget,
+                ref positionVelocity,
+                followSmooth
+            );
+
+            directionToTarget = target.position - transform.position;
+            if (directionToTarget.magnitude < minDistanceToTarget)
+                transform.position = target.position - directionToTarget.normalized * minDistanceToTarget;
+
+            lookAhead = Vector3.SmoothDamp(
+                lookAhead,
+                target.forward * lookAheadDistance,
+                ref lookAheadVelocity,
+                lookAheadSmooth
+            );
+
+            transform.LookAt(target.position + lookAhead);
+            transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
         }
 
-        smoothPosition = Vector3.Lerp(transform.position, desiredPosition, followSmooth);
+        else
+        {
+            transform.position = Vector3.SmoothDamp(
+                transform.position,
+                target.position,
+                ref positionVelocity,
+                followSmooth
+            );
 
-        transform.position = smoothPosition;
-
-        Quaternion desiredRotation = Quaternion.LookRotation(target.position - transform.position);
-        transform.rotation = Quaternion.Lerp(transform.rotation, desiredRotation, rotationSmooth);
+            transform.LookAt(target.position);
+        }
     }
+
+
+
+
+
+
 }
