@@ -8,21 +8,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float speedPlayer = 50f;
     Rigidbody rb;
     float maxVelocity = 10f;
-    [SerializeField] TrailRenderer skidTrail;
-    float reboundStrength = 40.75f;
-    TargetTp targetTp;
-
-    [Header("Score")]
-    float startScore = 50;
-    float totalScore;
-    float passTimeScore;
-    float plusMinusScoreToShow;
-    [SerializeField] GameObject canvasScore;
-    float seconds;
-    float animationDuration = 2;
-    [SerializeField] TMP_Text TotalScoreText;
-    [SerializeField] TMP_Text MinusPlusScoreText;
-    [Header("Giro")]
     [SerializeField] Vector3 rotate = new Vector3(0, 0.1f, 0);
     [SerializeField] Vector3 giroFrenoMano;
 
@@ -39,6 +24,7 @@ public class PlayerMovement : MonoBehaviour
 
     Vector2 movementInput = Vector2.zero;
     Controls control;
+
 
 
     void Start()
@@ -79,18 +65,16 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.W))
         {
             movementInput.x += 1;
-            if (!particulasAC.isPlaying)
-                particulasAC.Play();
         }
-        else
-        {
-            particulasAC.Stop();
-        }
+
+
 
         if (Input.GetKey(KeyCode.S))
         {
             movementInput.x -= 1;
         }
+
+
 
         if (Input.GetKey(KeyCode.D))
         {
@@ -106,34 +90,25 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.A))
         {
             movementInput.y -= 1;
-            if (!particulasR.isPlaying)
-                particulasR.Play();
         }
-        else if (!Input.GetKey(KeyCode.D) && !control.Movement.Turn.triggered)
+
+
+        if (Input.GetKeyDown(KeyCode.W))
+            particulasAC.Play();
+
+        if (Input.GetKeyDown(KeyCode.D))
+            particulasL.Play();
+
+        else if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.A))
         {
             particulasR.Stop();
         }
 
-        float breakPowerValue = control.Movement.Break.ReadValue<float>();
-        if (breakPowerValue != 0)
-        {
-            movementInput.x += breakPowerValue;
-        }
+        if (Input.GetKeyDown(KeyCode.A))
+            particulasR.Play();
 
-        float forwardValue = control.Movement.Forward.ReadValue<float>();
-        if (forwardValue != 0)
-        {
-            movementInput.x += forwardValue;
-        }
-
-        float turnValue = control.Movement.Turn.ReadValue<float>();
-        if (turnValue != 0)
-        {
-            movementInput.y += turnValue;
-        }
-
-        gearLever = Input.GetKey(KeyCode.Space);
     }
+
 
     void Movement()
     {
@@ -149,67 +124,38 @@ public class PlayerMovement : MonoBehaviour
             else
             {
                 rb.velocity = new Vector3(
-                        rb.velocity.x / (1 + breakPowerValue * Time.fixedDeltaTime),
+                        rb.velocity.x / (1 + powerBreak * Time.fixedDeltaTime),
                         rb.velocity.y,
-                        rb.velocity.z / (1 + breakPowerValue * Time.fixedDeltaTime));
+                        rb.velocity.z / (1 + powerBreak * Time.fixedDeltaTime));
+
+
             }
-        }
-
-
-        float breakValue = control.Movement.HandBreak.ReadValue<float>();
-        if (gearLever || breakValue > 0.5f)
-        {
-            rb.velocity = new Vector3(
-                rb.velocity.x / (1 + handBreakPower * Time.fixedDeltaTime),
-                rb.velocity.y,
-                rb.velocity.z / (1 + handBreakPower * Time.fixedDeltaTime));
-
-
-            skidTrail.emitting = true;
-
 
         }
-        else
+
+
+        if (movementInput.y != 0)
         {
+            rb.angularVelocity += new Vector3(
+                0,
+                rotate.y * movementInput.y,
+                0
+            );
 
-            skidTrail.emitting = false;
-        }
-
-
-
-        if (movementInput.y < 0)
-        {
-            rb.angularVelocity -= new Vector3(
-                rb.angularVelocity.x,
-                rb.angularVelocity.y - rotate.y);
-
-            if (gearLever)
-            {
-                rb.angularVelocity -= new Vector3(
-                rb.angularVelocity.x,
-                rb.angularVelocity.y - giroFrenoMano.y);
-            }
-        }
-
-        if (movementInput.y > 0)
-        {
-            rb.angularVelocity -= new Vector3(
-                rb.angularVelocity.x,
-                rb.angularVelocity.y + rotate.y);
-
-            if (gearLever)
-            {
-                rb.angularVelocity -= new Vector3(
-                rb.angularVelocity.x,
-                rb.angularVelocity.y + giroFrenoMano.y);
-            }
         }
 
         if (movementInput.x > 0)
         {
             rb.velocity += transform.forward * speedPlayer * Time.fixedDeltaTime;
 
-
+            //if (Input.GetKey(KeyCode.S))
+            //{
+            //    rb.velocity = new Vector3(
+            //        rb.velocity.x / (1 + breakPower * Time.deltaTime),
+            //        rb.velocity.y,
+            //        (rb.velocity.z / (1 + breakPower * Time.deltaTime)));
+            //    print("Estoy Frenando");
+            //}
         }
 
         else
@@ -218,9 +164,13 @@ public class PlayerMovement : MonoBehaviour
                 rb.velocity.x / (1 + friction * Time.deltaTime),
                 rb.velocity.y,
                 (rb.velocity.z / (1 + friction * Time.deltaTime)));
-
+            //print(friction);
             particulasAC.Stop();
-
+            //if (Input.GetKey(KeyCode.S))
+            //{
+            //    rb.velocity -= transform.forward * speedPlayer * Time.deltaTime;
+            //    print("MarchaTra");
+            //}
         }
 
         if (rb.velocity.x >= maxVelocity || rb.velocity.z >= maxVelocity)
@@ -258,14 +208,14 @@ public class PlayerMovement : MonoBehaviour
 
     void Rebound(Vector3 normal)
     {
-        //se utiliza para calcular la dirección de rebote del objeto después de una colisión
+        //se utiliza para calcular la direcciï¿½n de rebote del objeto despuï¿½s de una colisiï¿½n
         Vector3 reboteDirection = Vector3.Reflect(rb.velocity, normal).normalized;
 
-        //se utiliza para determinar el ángulo entre la dirección actual del objeto y la dirección de rebote calculad
+        //se utiliza para determinar el ï¿½ngulo entre la direcciï¿½n actual del objeto y la direcciï¿½n de rebote calculad
         float angle = Vector3.Angle(rb.velocity, reboteDirection);
         if (angle > 185f)
         {
-            //se utiliza para suavizar la dirección de rebote cuando el ángulo entre la dirección actual del objeto y la dirección de rebote es mayor que 185 grados
+            //se utiliza para suavizar la direcciï¿½n de rebote cuando el ï¿½ngulo entre la direcciï¿½n actual del objeto y la direcciï¿½n de rebote es mayor que 185 grados
             reboteDirection = Vector3.Slerp(rb.velocity.normalized, reboteDirection, 1.5f);
         }
 
